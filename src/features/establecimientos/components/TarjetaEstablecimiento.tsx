@@ -1,10 +1,13 @@
 import { ChevronRight, Clock3, MapPin, Store } from 'lucide-react'
+import { Estrellas } from '@/components/ui'
 import type { Establecimiento } from '../types'
 
 export type EstablecimientoConDatos = Establecimiento & {
   precioMinimo: number | null
   etiquetaPrecio: string
   distancia: { metros: number; minutos: number } | null
+  promedio: number | null
+  totalCalificaciones: number
 }
 
 type Props = {
@@ -39,6 +42,7 @@ export function TarjetaEstablecimiento({ lugar, seleccionado = false, onAbrir, o
               </button>
             </h3>
             <p>{lugar.tipo}</p>
+            <Estrellas promedio={lugar.promedio} total={lugar.totalCalificaciones} />
           </div>
           <ChevronRight size={20} aria-hidden="true" />
         </div>

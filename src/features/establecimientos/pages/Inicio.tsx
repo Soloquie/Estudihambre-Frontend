@@ -1,39 +1,65 @@
 import { ListFilter, MapPin, Menu as IconoLista, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Chip, EstadoError, EstadoVacio, ListaCargando, Button } from '@/components/ui'
 import { MapaInicio, type LugarMapa } from '@/components/map/MapaInicio'
+import { useResumenes } from '@/features/calificaciones/hooks'
 import { preciosMinimos, useMenus } from '@/features/menus/hooks'
 import { mensajeDeError } from '@/lib/http/client'
 import { monedaCOP } from '@/lib/format'
+import type { FiltroEstablecimientos } from '../api'
+import { PanelFiltros } from '../components/PanelFiltros'
 import { TarjetaEstablecimiento } from '../components/TarjetaEstablecimiento'
 import { useEstablecimientos } from '../hooks'
-import { enriquecer, ordenar, type Orden } from '../utilidades'
+import { enriquecer, OPCIONES_ORDEN, ordenar, type Orden } from '../utilidades'
 
-const OPCIONES_ORDEN: { valor: Orden; texto: string }[] = [
-  { valor: 'precio', texto: 'Menor precio' },
-  { valor: 'cerca', texto: 'Más cerca' },
-]
+/** Los filtros viven en la URL para poder compartir o recargar una búsqueda. */
+function leerFiltro(parametros: URLSearchParams): FiltroEstablecimientos {
+  const numero = (clave: string) => {
+    const valor = Number(parametros.get(clave))
+    return Number.isFinite(valor) && valor > 0 ? valor : undefined
+  }
+  return {
+    nombre: parametros.get('nombre') || undefined,
+    tipo: parametros.get('tipo') || undefined,
+    plato: parametros.get('plato') || undefined,
+    precioMax: numero('precioMax'),
+    minutosMax: numero('minutos'),
+  }
+}
+
+function escribirFiltro(filtro: FiltroEstablecimientos): Record<string, string> {
+  const parametros: Record<string, string> = {}
+  if (filtro.nombre) parametros.nombre = filtro.nombre
+  if (filtro.tipo) parametros.tipo = filtro.tipo
+  if (filtro.plato) parametros.plato = filtro.plato
+  if (filtro.precioMax) parametros.precioMax = String(filtro.precioMax)
+  if (filtro.minutosMax) parametros.minutos = String(filtro.minutosMax)
+  return parametros
+}
 
 export function Inicio() {
   const navegar = useNavigate()
   const [parametros, setParametros] = useSearchParams()
-  const nombre = parametros.get('nombre') ?? undefined
-  const tipo = parametros.get('tipo') ?? undefined
+  const filtro = useMemo(() => leerFiltro(parametros), [parametros])
+  const { nombre, tipo } = filtro
   const [texto, setTexto] = useState(nombre ?? '')
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const [orden, setOrden] = useState<Orden>('precio')
   const [vista, setVista] = useState<'lista' | 'mapa'>('lista')
   const [resaltado, setResaltado] = useState<number>()
 
   useEffect(() => setTexto(nombre ?? ''), [nombre])
 
-  const establecimientos = useEstablecimientos({ nombre, tipo })
+  const establecimientos = useEstablecimientos(filtro)
   const todos = useEstablecimientos({})
   const menus = useMenus()
+  const ids = useMemo(() => (todos.data ?? []).map((lugar) => lugar.id), [todos.data])
+  const resumenes = useResumenes(ids)
 
   const lugares = useMemo(
-    () => ordenar(enriquecer(establecimientos.data ?? [], preciosMinimos(menus.data)), orden),
-    [establecimientos.data, menus.data, orden],
+    () => ordenar(enriquecer(establecimientos.data ?? [], preciosMinimos(menus.data), resumenes), orden),
+    [establecimientos.data, menus.data, resumenes, orden],
   )
   // Los tipos salen de la lista completa para que los chips no desaparezcan al filtrar.
   const tipos = useMemo(() => [...new Set((todos.data ?? []).map((lugar) => lugar.tipo))].sort(), [todos.data])
@@ -51,17 +77,22 @@ export function Inicio() {
       imagenUrl: lugar.imagenUrl,
     }))
 
+  const aplicar = useCallback(
+    (nuevo: FiltroEstablecimientos) => setParametros(escribirFiltro(nuevo)),
+    [setParametros],
+  )
   const buscar = (evento: FormEvent) => {
     evento.preventDefault()
-    const termino = texto.trim()
-    setParametros(termino ? { nombre: termino } : {})
+    aplicar({ ...filtro, nombre: texto.trim() || undefined })
   }
   const limpiar = () => {
     setTexto('')
     setParametros({})
   }
   const abrir = (id: number) => navegar(`/establecimientos/${id}`)
-  const hayFiltro = Boolean(nombre || tipo)
+  const cerrarFiltros = useCallback(() => setFiltrosAbiertos(false), [])
+  const filtrosActivos = [filtro.tipo, filtro.plato, filtro.precioMax, filtro.minutosMax].filter(Boolean).length
+  const hayFiltro = Boolean(nombre) || filtrosActivos > 0
   const cargando = establecimientos.isLoading || menus.isLoading
 
   return (
@@ -81,12 +112,24 @@ export function Inicio() {
             placeholder="Busca un restaurante o cafetería"
           />
           {texto && (
-            <button type="button" className="clear-search" aria-label="Limpiar búsqueda" onClick={limpiar}>
+            <button
+              type="button"
+              className="clear-search"
+              aria-label="Limpiar búsqueda"
+              onClick={() => {
+                setTexto('')
+                aplicar({ ...filtro, nombre: undefined })
+              }}
+            >
               <X size={18} />
             </button>
           )}
-          <button type="submit" aria-label="Buscar">
-            <ListFilter size={20} />
+          <button
+            type="button"
+            aria-label={filtrosActivos ? `Filtros, ${filtrosActivos} activos` : 'Abrir filtros'}
+            onClick={() => setFiltrosAbiertos(true)}
+          >
+            {filtrosActivos ? <span className="filter-count">{filtrosActivos}</span> : <ListFilter size={20} />}
           </button>
         </form>
       </section>
@@ -102,10 +145,7 @@ export function Inicio() {
             <Chip
               key={opcionTipo}
               active={tipo === opcionTipo}
-              onClick={() => {
-                setTexto('')
-                setParametros(tipo === opcionTipo ? {} : { tipo: opcionTipo })
-              }}
+              onClick={() => aplicar({ ...filtro, tipo: tipo === opcionTipo ? undefined : opcionTipo })}
             >
               {opcionTipo}
             </Chip>
@@ -128,7 +168,7 @@ export function Inicio() {
         </div>
         {hayFiltro && (
           <button type="button" onClick={limpiar}>
-            <X size={18} /> Quitar filtro
+            <X size={18} /> Quitar filtros
           </button>
         )}
       </div>
@@ -143,7 +183,7 @@ export function Inicio() {
       ) : lugares.length === 0 ? (
         <EstadoVacio
           titulo={hayFiltro ? 'No encontramos resultados' : 'Aún no hay establecimientos aprobados'}
-          descripcion={hayFiltro ? 'Prueba con otro nombre o tipo.' : 'Vuelve pronto: estamos sumando lugares.'}
+          descripcion={hayFiltro ? 'Prueba con otro nombre, un presupuesto mayor o más distancia.' : 'Vuelve pronto: estamos sumando lugares.'}
           accion={
             hayFiltro && (
               <Button variant="secondary" onClick={limpiar}>
@@ -177,6 +217,17 @@ export function Inicio() {
           </div>
           <MapaInicio lugares={lugaresMapa} seleccionadoId={resaltado} onSeleccionar={setResaltado} onAbrir={abrir} />
         </div>
+      )}
+      {filtrosAbiertos && (
+        <PanelFiltros
+          filtro={filtro}
+          tipos={tipos}
+          onCerrar={cerrarFiltros}
+          onAplicar={(nuevo) => {
+            aplicar(nuevo)
+            setFiltrosAbiertos(false)
+          }}
+        />
       )}
     </main>
   )

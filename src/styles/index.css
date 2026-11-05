@@ -493,3 +493,24 @@ a.back-link { text-decoration: none; }
 a.admin-exit { text-decoration: none; margin-top: auto; }
 a.admin-exit + .admin-exit { margin-top: 0; }
 td .owner-actions .btn { min-height: 36px; padding: 6px 10px; font-size: 13px; }
+.filter-group input:not(.range) { margin-top: 10px; }
+.rating.muted { color: var(--text-2); font-size: 13px; }
+.filter-count { min-width: 20px; height: 20px; border-radius: 999px; background: #fff; color: var(--dark-green); font-size: 12px; font-weight: 800; display: grid; place-items: center; padding: 0 5px; }
+.rate-box { margin: 18px 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.rate-box > b { font-size: 16px; }
+.rate-box > p { color: var(--text-2); margin: 4px 0 8px; }
+.rate-box .star-row { border-top: 0; padding: 4px 0 8px; }
+.rate-box .star-row button svg { width: 32px; height: 32px; }
+.rate-box .btn { margin-top: 6px; }
+.comment-form { margin: 8px 0 18px; }
+.comment-form label { margin-top: 0; }
+.reviews-title { margin: 24px 0 4px; font-size: 20px; }
+.review-actions { margin-left: auto; display: flex; gap: 2px; }
+.review-actions button { width: 40px; height: 40px; border: 0; background: none; border-radius: 50%; color: var(--text-2); display: grid; place-items: center; }
+.review-actions button:hover { background: var(--surface); color: #1a1a1a; }
+.muted-text { color: var(--text-2); }
+.rating-link { border: 0; background: none; padding: 0; margin: 6px 0 4px; cursor: pointer; }
+a.info-line { color: inherit; text-decoration: none; }
+.moderation-select { padding: 16px 18px 0; margin: 0 0 12px; max-width: 420px; }
+.comment-cell { max-width: 420px; white-space: normal; }
+.table-card td .btn { min-height: 36px; padding: 6px 10px; font-size: 13px; }

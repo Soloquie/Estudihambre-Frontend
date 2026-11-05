@@ -1,3 +1,4 @@
+import { METROS_POR_MINUTO, UNIVERSIDAD } from '@/config/constants'
 import { api } from '@/lib/http/client'
 import type { DatosEstablecimiento, Establecimiento } from './types'
 
@@ -9,13 +10,29 @@ function formulario(datos: Partial<DatosEstablecimiento>, imagen?: File): FormDa
   return form
 }
 
-export type FiltroEstablecimientos = { nombre?: string; tipo?: string }
+export type FiltroEstablecimientos = {
+  nombre?: string
+  tipo?: string
+  /** Busca en el título y la descripción de los menús. */
+  plato?: string
+  /** Al menos un menú con precio igual o menor. */
+  precioMax?: number
+  /** Distancia máxima caminando desde la universidad, en minutos. */
+  minutosMax?: number
+}
 
-/** El backend acepta nombre o tipo, no ambos: si llega nombre, ignora tipo. */
-export function listarEstablecimientos({ nombre, tipo }: FiltroEstablecimientos = {}) {
+/** El backend combina todos los filtros (nombre, tipo, plato, precio y cercanía). */
+export function listarEstablecimientos(filtro: FiltroEstablecimientos = {}) {
   const parametros = new URLSearchParams()
-  if (nombre) parametros.set('nombre', nombre)
-  else if (tipo) parametros.set('tipo', tipo)
+  if (filtro.nombre) parametros.set('nombre', filtro.nombre)
+  if (filtro.tipo) parametros.set('tipo', filtro.tipo)
+  if (filtro.plato) parametros.set('plato', filtro.plato)
+  if (filtro.precioMax) parametros.set('precioMax', String(filtro.precioMax))
+  if (filtro.minutosMax) {
+    parametros.set('latitud', String(UNIVERSIDAD.lat))
+    parametros.set('longitud', String(UNIVERSIDAD.lng))
+    parametros.set('radioKm', String((filtro.minutosMax * METROS_POR_MINUTO) / 1000))
+  }
   const consulta = parametros.toString()
   return api<Establecimiento[]>(`/establecimientos${consulta ? `?${consulta}` : ''}`)
 }

@@ -1,9 +1,11 @@
-import { ArrowLeft, MapPin, MessageCircle, Phone, Store } from 'lucide-react'
+import { ArrowLeft, MapPin, MessageCircle, Phone, Star, Store } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapaDetalle } from '@/components/map/MapaDetalle'
-import { Button, EstadoError, EstadoVacio } from '@/components/ui'
+import { Button, EstadoError, EstadoVacio, Estrellas } from '@/components/ui'
 import { UNIVERSIDAD } from '@/config/constants'
+import { useResumenCalificaciones } from '@/features/calificaciones/hooks'
+import { SeccionResenas } from '@/features/comentarios/components/SeccionResenas'
 import { useMenusDeEstablecimiento } from '@/features/menus/hooks'
 import type { Menu } from '@/features/menus/types'
 import { enlaceWhatsApp, monedaCOP } from '@/lib/format'
@@ -11,7 +13,7 @@ import { distanciaDesdeUniversidad } from '@/lib/geo'
 import { ApiError, mensajeDeError } from '@/lib/http/client'
 import { useEstablecimiento } from '../hooks'
 
-type Pestana = 'Menú' | 'Información'
+type Pestana = 'Menú' | 'Información' | 'Reseñas'
 
 function TarjetaMenu({ menu, destacado }: { menu: Menu; destacado: boolean }) {
   return (
@@ -42,6 +44,7 @@ export function Detalle() {
   const [pestana, setPestana] = useState<Pestana>('Menú')
   const consulta = useEstablecimiento(id)
   const menus = useMenusDeEstablecimiento(id)
+  const resumen = useResumenCalificaciones(id)
 
   if (consulta.isLoading) return <p className="state-box">Cargando establecimiento…</p>
 
@@ -88,6 +91,12 @@ export function Detalle() {
           <div>
             <span className="overline">{lugar.tipo.toUpperCase()}</span>
             <h1>{lugar.nombre}</h1>
+            <button type="button" className="rating-link" onClick={() => setPestana('Reseñas')}>
+              <Estrellas
+                promedio={resumen.data?.totalCalificaciones ? resumen.data.promedio : null}
+                total={resumen.data?.totalCalificaciones ?? 0}
+              />
+            </button>
           </div>
         </div>
         {lugar.descripcion && <p>{lugar.descripcion}</p>}
@@ -103,7 +112,7 @@ export function Detalle() {
         </div>
 
         <div className="tabs" role="tablist">
-          {(['Menú', 'Información'] as Pestana[]).map((opcion) => (
+          {(['Menú', 'Información', 'Reseñas'] as Pestana[]).map((opcion) => (
             <button
               key={opcion}
               type="button"
@@ -132,6 +141,8 @@ export function Detalle() {
           </div>
         )}
 
+        {pestana === 'Reseñas' && <SeccionResenas establecimientoId={lugar.id} />}
+
         {pestana === 'Información' && (
           <div className="tab-content" role="tabpanel">
             <h2>Cómo llegar</h2>
@@ -153,9 +164,9 @@ export function Detalle() {
             {lugar.telefono && (
               <>
                 <h2>Contacto</h2>
-                <p className="info-line">
+                <a className="info-line" href={`tel:${lugar.telefono}`}>
                   <Phone /> {lugar.telefono}
-                </p>
+                </a>
               </>
             )}
           </div>
@@ -163,21 +174,24 @@ export function Detalle() {
       </div>
 
       <div className="detail-actions">
+        <Button
+          onClick={() => {
+            setPestana('Reseñas')
+            window.scrollTo({ top: 300, behavior: 'smooth' })
+          }}
+        >
+          <Star size={18} /> Calificar
+        </Button>
         {urlRuta && (
           <Button variant="secondary" onClick={() => window.open(urlRuta, '_blank', 'noopener,noreferrer')}>
             <MapPin size={18} /> Cómo llegar
           </Button>
         )}
         {lugar.telefono ? (
-          <Button onClick={() => window.open(enlaceWhatsApp(lugar.telefono ?? ''), '_blank', 'noopener,noreferrer')}>
+          <Button variant="secondary" onClick={() => window.open(enlaceWhatsApp(lugar.telefono ?? ''), '_blank', 'noopener,noreferrer')}>
             <MessageCircle size={18} /> WhatsApp
           </Button>
         ) : null}
-        {lugar.telefono && (
-          <a className="btn btn-text" href={`tel:${lugar.telefono}`}>
-            <Phone size={18} /> Llamar
-          </a>
-        )}
       </div>
     </main>
   )

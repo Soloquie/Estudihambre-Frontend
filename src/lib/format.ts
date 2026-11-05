@@ -25,3 +25,21 @@ export function enlaceWhatsApp(telefono: string): string {
   const numero = digitos.startsWith('57') && digitos.length > 10 ? digitos : `57${digitos}`
   return `https://wa.me/${numero}`
 }
+
+const relativo = new Intl.RelativeTimeFormat('es-CO', { numeric: 'auto' })
+
+/** "hace 2 días", "hace 3 horas"… El backend envía LocalDateTime sin zona, que se interpreta como hora local. */
+export function tiempoRelativo(fecha: string): string {
+  const segundos = (new Date(fecha).getTime() - Date.now()) / 1000
+  const unidades: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 31_536_000],
+    ['month', 2_592_000],
+    ['day', 86_400],
+    ['hour', 3_600],
+    ['minute', 60],
+  ]
+  for (const [unidad, tamano] of unidades) {
+    if (Math.abs(segundos) >= tamano) return relativo.format(Math.round(segundos / tamano), unidad)
+  }
+  return 'hace un momento'
+}

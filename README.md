@@ -1,236 +1,92 @@
-# \# 🍳 EstudiHambre · Frontend
+# EstudiHambre · Frontend
 
-# 
+Aplicación web (React 19 + Vite + TypeScript + Tailwind v4) para consultar y comparar los restaurantes y cafeterías cercanos a la Universidad del Quindío. Se conecta al backend Spring Boot de `../backend`.
 
-# \*\*Aplicación web moderna para consultar y comparar restaurantes y cafeterías cercanos a la Universidad del Quindío.\*\* 
+## Requisitos
 
-# 
+- Node.js 22
+- pnpm (`npm install -g pnpm`)
+- Backend corriendo en `http://localhost:8080` (ver abajo)
 
-# El proyecto está construido con \*\*React 19, Vite, TypeScript y Tailwind v4\*\*, y se conecta de forma nativa al backend Spring Boot alojado en `../backend`.
+## Cómo ejecutar
 
-# 
+### 1. Base de datos (solo la primera vez)
 
-# \---
+Crea una base de datos vacía llamada `estudihambre` en PostgreSQL, desde pgAdmin (*Databases → Create → Database*) o con:
 
-# 
+```powershell
+& "C:\Program Files\PostgreSQL\<versión>\bin\psql.exe" -U postgres -c "CREATE DATABASE estudihambre;"
+```
 
-# \## 🛠️ Requisitos Previos
+Las tablas las crea Spring automáticamente.
 
-# 
+### 2. Backend (terminal 1)
 
-# Antes de comenzar, asegúrate de tener instalado y configurado lo siguiente:
+```powershell
+cd backend
+$env:DB_URL="jdbc:postgresql://localhost:5432/estudihambre"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="<tu contraseña>"
+$env:CLOUDINARY_CLOUD_NAME="..."; $env:CLOUDINARY_API_KEY="..."; $env:CLOUDINARY_API_SECRET="..."
+.\mvnw.cmd spring-boot:run
+```
 
-# \* \*\*Node.js 22\*\* o superior.
+### 3. Frontend (terminal 2)
 
-# \* \*\*pnpm\*\* (Instálalo globalmente con `npm install -g pnpm`).
+```powershell
+cd frontend
+pnpm install
+pnpm dev
+```
 
-# \* \*\*Backend operativo\*\* ejecutándose en `http://localhost:8080`.
+Abre `http://localhost:5173`. Vite reenvía `/api` al backend, así que las cookies de sesión y CSRF funcionan sin configurar CORS.
 
-# 
+### Usuario administrador
 
-# \---
+El registro siempre crea usuarios `ESTUDIANTE`. Para probar el panel de administración, en PostgreSQL:
 
-# 
+```sql
+UPDATE usuarios SET rol = 'ADMIN' WHERE correo = 'tu@correo.com';
+```
 
-# \## 🚀 Guía de Inicio Rápido
+Cierra sesión y vuelve a entrar.
 
-# 
+## Scripts
 
-# Sigue estos pasos en orden para levantar el entorno de desarrollo.
+| Comando | Qué hace |
+|---|---|
+| `pnpm dev` | Servidor de desarrollo |
+| `pnpm build` | Compilación de producción |
+| `pnpm typecheck` | Verificación de tipos |
+| `pnpm lint` | ESLint (TypeScript, hooks de React y accesibilidad) |
+| `pnpm test` | Pruebas con Vitest |
 
-# 
+## Rutas
 
-# \### 1. Base de Datos (Solo la primera vez)
+| Ruta | Página | Acceso |
+|---|---|---|
+| `/` | Inicio: búsqueda por nombre; filtros por tipo, plato, presupuesto y distancia; orden por precio, cercanía, calificación y precio-calidad; lista y mapa | Público |
+| `/establecimientos/:id` | Detalle: menús, precios, ubicación, contacto, calificaciones y comentarios | Público (calificar y comentar requiere sesión) |
+| `/ingresar`, `/registro` | Acceso | Sin sesión |
+| `/perfil` | Datos del usuario, notificaciones, cerrar sesión | Con sesión |
+| `/mis-establecimientos` | Registrar, editar y eliminar establecimientos propios | Estudiante o restaurante |
+| `/mis-establecimientos/:id/menus` | Gestión de menús (solo establecimientos aprobados) | Propietario |
+| `/admin` | Aprobar o rechazar establecimientos y moderar comentarios | Administrador |
 
-# Crea una base de datos vacía llamada `estudihambre` en PostgreSQL. Puedes hacerlo desde la interfaz de pgAdmin (\*Databases → Create → Database\*) o mediante la consola de PowerShell:
+## Estructura
 
-# 
+```
+src/
+  app/            router, providers y layout principal
+  components/ui   botones, chips, estados (carga, vacío, error), diálogo, toast
+  components/map  mapas de Leaflet (inicio, detalle, selector de ubicación)
+  config/         variables de entorno y constantes (ubicación de la universidad)
+  features/       auth, establecimientos, menus, calificaciones, comentarios, admin, notificaciones
+                  cada una con api.ts (llamadas HTTP), hooks.ts (React Query), types.ts y pages/
+  lib/            cliente HTTP con CSRF, cálculo de distancias, formatos
+  styles/         tokens de Tailwind y estilos del prototipo de Figma
+```
 
-# ```powershell
+Las páginas nunca llaman a `fetch`: usan hooks, los hooks usan las funciones de `api.ts` y todo pasa por `lib/http/client.ts`.
 
-# \& "C:\\Program Files\\PostgreSQL\\<VERSION>\\bin\\psql.exe" -U postgres -c "CREATE DATABASE estudihambre;"
-
-# ```
-
-# > 💡 \*Nota: Las tablas y la estructura de datos serán creadas automáticamente por Spring Boot al iniciar.\*
-
-# 
-
-# \### 2. Levantar el Backend (Terminal 1)
-
-# Accede a la carpeta del backend, configura las variables de entorno necesarias y arranca el servidor:
-
-# 
-
-# ```powershell
-
-# cd backend
-
-# \\$env:DB\_URL="jdbc:postgresql://localhost:5432/estudihambre"
-
-# \\$env:DB\_USERNAME="postgres"
-
-# \\$env:DB\_PASSWORD=""
-
-# \\$env:CLOUDINARY\_CLOUD\_NAME="..."
-
-# \\$env:CLOUDINARY\_API\_KEY="..."
-
-# \\$env:CLOUDINARY\_API\_SECRET="..."
-
-# .\\mvnw.cmd spring-boot:run
-
-# ```
-
-# 
-
-# \### 3. Levantar el Frontend (Terminal 2)
-
-# Instala las dependencias y arranca el servidor de desarrollo de Vite:
-
-# 
-
-# ```powershell
-
-# cd frontend
-
-# pnpm install
-
-# pnpm dev
-
-# ```
-
-# 
-
-# Una vez iniciado, abre \[http://localhost:5173](http://localhost:5173) en tu navegador.
-
-# > 🔄 \*Vite está configurado para reenviar las peticiones de `/api` al backend automáticamente. Las cookies de sesión y CSRF funcionan de inmediato sin configuraciones adicionales de CORS.\*
-
-# 
-
-# \---
-
-# 
-
-# \## 🔑 Gestión de Usuarios y Roles
-
-# 
-
-# Por defecto, el registro de la aplicación asigna el rol de `ESTUDIANTE`. Para otorgar permisos de administrador y probar el panel de control, ejecuta la siguiente consulta en tu base de datos:
-
-# 
-
-# ```sql
-
-# UPDATE usuarios SET rol = 'ADMIN' WHERE correo = 'tu@correo.com';
-
-# ```
-
-# > ⚠️ \*Importante: Debes cerrar sesión y volver a ingresar en la aplicación para que los cambios de rol surtan efecto.\*
-
-# 
-
-# \---
-
-# 
-
-# \## ⚙️ Scripts Disponibles
-
-# 
-
-# Ejecuta estos comandos en la raíz del frontend (`/frontend`) según lo requieras:
-
-# 
-
-# | Comando | Descripción |
-
-# | :--- | :--- |
-
-# | `pnpm dev` | Levanta el servidor de desarrollo local |
-
-# | `pnpm build` | Compila la aplicación optimizada para producción |
-
-# | `pnpm typecheck` | Ejecuta la verificación estática de tipos con TypeScript |
-
-# | `pnpm lint` | Analiza el código con ESLint (reglas de React, hooks y accesibilidad) |
-
-# | `pnpm test` | Ejecuta la suite de pruebas unitarias con Vitest |
-
-# 
-
-# \---
-
-# 
-
-# \## 🗺️ Enrutamiento (Rutas de la Aplicación)
-
-# 
-
-# | Ruta | Página / Funcionalidad | Permiso de Acceso |
-
-# | :--- | :--- | :--- |
-
-# | `/` | \*\*Inicio\*\*: Búsqueda, filtros por tipo, ordenamiento, lista y mapa interactivo. | Público |
-
-# | `/establecimientos/:id` | \*\*Detalle\*\*: Consulta de menús, precios, ubicación y datos de contacto. | Público |
-
-# | `/ingresar` \\| `/registro` | \*\*Acceso\*\*: Formulación de autenticación y creación de cuentas. | Sin sesión activa |
-
-# | `/perfil` | \*\*Mi Perfil\*\*: Gestión de datos de usuario, notificaciones y cierre de sesión. | Requiere sesión |
-
-# | `/mis-establecimientos` | \*\*Gestión\*\*: Registro, edición y eliminación de locales propios. | Estudiante o Restaurante |
-
-# | `/mis-establecimientos/:id/menus` | \*\*Menús\*\*: Gestión de la carta (solo locales previamente aprobados). | Propietario del local |
-
-# | `/admin` | \*\*Panel Admin\*\*: Aprobación o rechazo de solicitudes de establecimientos. | Administrador |
-
-# 
-
-# \---
-
-# 
-
-# \## 📂 Estructura del Proyecto (`src/`)
-
-# 
-
-# La arquitectura del frontend está modularizada por características y sigue buenas prácticas de desacoplamiento:
-
-# 
-
-# \* \*\*`app/`\*\* · Enrutador global (`router`), proveedores de contexto (`providers`) y diseño de página principal (`layout`).
-
-# \* \*\*`components/ui/`\*\* · Componentes atómicos reutilizables (botones, chips, estados de carga/error, diálogos y toasts).
-
-# \* \*\*`components/map/`\*\* · Integración de mapas con Leaflet (vistas de inicio, detalles y selector de coordenadas geográficas).
-
-# \* \*\*`config/`\*\* · Manejo de variables de entorno y constantes globales (como las coordenadas de la Universidad del Quindío).
-
-# \* \*\*`features/`\*\* · Módulos core del negocio (`auth`, `establecimientos`, `menus`, `admin`, `notificaciones`). Cada módulo contiene de forma aislada:
-
-# &#x20; \* `api.ts`: Llamadas HTTP dedicadas.
-
-# &#x20; \* `hooks.ts`: Estado asíncrono gestionado a través de \*\*React Query\*\*.
-
-# &#x20; \* `types.ts`: Definiciones de interfaces de TypeScript.
-
-# &#x20; \* `pages/`: Componentes de página del módulo.
-
-# \* \*\*`lib/`\*\* · Utilidades core de la app: cliente HTTP centralizado con token CSRF, algoritmos de cálculo de distancias y formateadores.
-
-# \* \*\*`styles/`\*\* · Configuración de diseño, tokens de diseño de Tailwind v4 y estilos específicos extraídos del prototipo de Figma.
-
-# 
-
-# > 🚨 \*\*Regla de Arquitectura:\*\* Las páginas nunca invocan `fetch` o `axios` directamente. El flujo de datos obligatorio es: \*\*Página → React Query Hook → Función api.ts → Cliente HTTP centralizado (`lib/http/client.ts`)\*\*.
-
-# 
-
-# \---
-
-# 
-
-# \## 📝 Notas de Desarrollo
-
-# \* Los requerimientos funcionales del frontend que aún no se encuentran soportados por los endpoints del backend están documentados detalladamente en el archivo `docs/brechas-backend.md`.
-
+Lo que el frontend necesita y el backend aún no ofrece está en `docs/brechas-backend.md`.

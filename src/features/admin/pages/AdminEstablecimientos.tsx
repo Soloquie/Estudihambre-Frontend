@@ -1,4 +1,4 @@
-import { ArrowLeft, Bell, Check, Clock3, LogOut, Store, X } from 'lucide-react'
+import { ArrowLeft, Bell, Check, Clock3, LogOut, MessageSquare, Store, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, ConfirmDialog, EstadoBadge, EstadoError, EstadoVacio, Logo, useToast } from '@/components/ui'
@@ -6,14 +6,15 @@ import { useAuth } from '@/features/auth/AuthProvider'
 import type { Establecimiento } from '@/features/establecimientos/types'
 import { mensajeDeError } from '@/lib/http/client'
 import type { Decision } from '../api'
+import { ModeracionComentarios } from '../components/ModeracionComentarios'
 import { useDecidirEstablecimiento, useEstablecimientosAdmin, type PestanaAdmin } from '../hooks'
 
 type Pendiente = { lugar: Establecimiento; decision: Decision }
 
 export function AdminEstablecimientos() {
-  const [pestana, setPestana] = useState<PestanaAdmin>('pendientes')
+  const [pestana, setPestana] = useState<PestanaAdmin | 'comentarios'>('pendientes')
   const [confirmacion, setConfirmacion] = useState<Pendiente | null>(null)
-  const consulta = useEstablecimientosAdmin(pestana)
+  const consulta = useEstablecimientosAdmin(pestana === 'comentarios' ? 'todos' : pestana)
   const pendientes = useEstablecimientosAdmin('pendientes')
   const todos = useEstablecimientosAdmin('todos')
   const decidir = useDecidirEstablecimiento()
@@ -54,6 +55,9 @@ export function AdminEstablecimientos() {
           <button type="button" className={pestana === 'todos' ? 'active' : ''} onClick={() => setPestana('todos')}>
             <Store /> Todos
           </button>
+          <button type="button" className={pestana === 'comentarios' ? 'active' : ''} onClick={() => setPestana('comentarios')}>
+            <MessageSquare /> Comentarios
+          </button>
           <Link className="admin-nav-link" to="/perfil">
             <Bell /> Notificaciones
           </Link>
@@ -70,8 +74,12 @@ export function AdminEstablecimientos() {
         <div className="admin-heading">
           <div>
             <p>Panel de administración</p>
-            <h1>Establecimientos</h1>
-            <span>Revisa y aprueba los establecimientos que registran los propietarios.</span>
+            <h1>{pestana === 'comentarios' ? 'Comentarios' : 'Establecimientos'}</h1>
+            <span>
+              {pestana === 'comentarios'
+                ? 'Oculta o restaura los comentarios publicados en cada establecimiento.'
+                : 'Revisa y aprueba los establecimientos que registran los propietarios.'}
+            </span>
           </div>
         </div>
 
@@ -93,6 +101,9 @@ export function AdminEstablecimientos() {
           </article>
         </div>
 
+        {pestana === 'comentarios' ? (
+          <ModeracionComentarios />
+        ) : (
         <section className="table-card">
           {consulta.isLoading && <p className="state-box">Cargando…</p>}
           {consulta.isError && (
@@ -147,6 +158,7 @@ export function AdminEstablecimientos() {
             </table>
           )}
         </section>
+        )}
       </main>
 
       {confirmacion && (
