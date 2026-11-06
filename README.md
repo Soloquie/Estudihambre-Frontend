@@ -65,12 +65,14 @@ Cierra sesión y vuelve a entrar.
 
 | Ruta | Página | Acceso |
 |---|---|---|
-| `/` | Inicio: búsqueda por nombre; filtros por tipo, plato, presupuesto y distancia; orden por precio, cercanía, calificación y precio-calidad; lista y mapa | Público |
-| `/establecimientos/:id` | Detalle: menús, precios, ubicación, contacto, calificaciones y comentarios | Público (calificar y comentar requiere sesión) |
+| `/` | Inicio: búsqueda por nombre; filtros por tipo, plato, presupuesto, distancia, abierto ahora y con beneficio; orden por precio, cercanía, calificación y precio-calidad; lista y mapa | Público |
+| `/estudiantil` | Sección estudiantil: descuentos y tiqueteras vigentes, con precio por comida y ahorro frente al menú más económico | Público |
+| `/establecimientos/:id` | Detalle: horario y estado abierto/cerrado, menús, beneficios estudiantiles, ubicación, contacto, calificaciones y comentarios | Público (calificar y comentar requiere sesión) |
 | `/ingresar`, `/registro` | Acceso | Sin sesión |
 | `/perfil` | Datos del usuario, notificaciones, cerrar sesión | Con sesión |
-| `/mis-establecimientos` | Registrar, editar y eliminar establecimientos propios | Estudiante o restaurante |
+| `/mis-establecimientos` | Registrar, editar y eliminar establecimientos propios (con horario de atención) | Estudiante o restaurante |
 | `/mis-establecimientos/:id/menus` | Gestión de menús (solo establecimientos aprobados) | Propietario |
+| `/mis-establecimientos/:id/beneficios` | Crear, editar, pausar y eliminar descuentos y tiqueteras | Propietario |
 | `/admin` | Aprobar o rechazar establecimientos y moderar comentarios | Administrador |
 
 ## Estructura
@@ -81,7 +83,7 @@ src/
   components/ui   botones, chips, estados (carga, vacío, error), diálogo, toast
   components/map  mapas de Leaflet (inicio, detalle, selector de ubicación)
   config/         variables de entorno y constantes (ubicación de la universidad)
-  features/       auth, establecimientos, menus, calificaciones, comentarios, admin, notificaciones
+  features/       auth, establecimientos, menus, beneficios, calificaciones, comentarios, admin, notificaciones
                   cada una con api.ts (llamadas HTTP), hooks.ts (React Query), types.ts y pages/
   lib/            cliente HTTP con CSRF, cálculo de distancias, formatos
   styles/         tokens de Tailwind y estilos del prototipo de Figma

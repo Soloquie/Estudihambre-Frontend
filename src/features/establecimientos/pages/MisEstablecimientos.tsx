@@ -1,8 +1,9 @@
-import { Edit3, Plus, Store, Trash2, Utensils } from 'lucide-react'
+import { Edit3, Plus, Store, Trash2, Utensils, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfirmDialog, EstadoBadge, EstadoError, EstadoVacio, ListaCargando, useToast } from '@/components/ui'
 import { mensajeDeError } from '@/lib/http/client'
+import { EstadoHorario } from '../components/EstadoHorario'
 import { useEliminarEstablecimiento, useMisEstablecimientos } from '../hooks'
 import type { Establecimiento } from '../types'
 
@@ -60,7 +61,10 @@ export function MisEstablecimientos() {
               </div>
             )}
             <div>
-              <EstadoBadge estado={lugar.estado} />
+              <div className="owner-badges">
+                <EstadoBadge estado={lugar.estado} />
+                <EstadoHorario lugar={lugar} compacto />
+              </div>
               <h3>{lugar.nombre}</h3>
               <p>
                 {lugar.tipo} · {lugar.direccion}
@@ -80,6 +84,9 @@ export function MisEstablecimientos() {
                     <Utensils size={16} /> Menús tras aprobación
                   </button>
                 )}
+                <Link className="btn btn-secondary" to={`/mis-establecimientos/${lugar.id}/beneficios`}>
+                  <GraduationCap size={16} /> Beneficios
+                </Link>
                 <button type="button" className="btn btn-text" onClick={() => setPorEliminar(lugar)}>
                   <Trash2 size={16} /> Eliminar
                 </button>

@@ -16,7 +16,7 @@ import {
   type SalidaEstablecimiento,
 } from '../schemas'
 
-const CAMPOS = ['nombre', 'tipo', 'descripcion', 'direccion', 'telefono'] as const
+const CAMPOS = ['nombre', 'tipo', 'descripcion', 'direccion', 'telefono', 'horaApertura', 'horaCierre'] as const
 
 export function FormularioEstablecimiento() {
   const { id } = useParams()
@@ -36,7 +36,16 @@ export function FormularioEstablecimiento() {
   const formulario = useForm<EntradaEstablecimiento, unknown, SalidaEstablecimiento>({
     resolver: zodResolver(esquemaEstablecimiento),
     mode: 'onBlur',
-    defaultValues: { nombre: '', tipo: '', descripcion: '', direccion: '', telefono: '' },
+    defaultValues: {
+      nombre: '',
+      tipo: '',
+      descripcion: '',
+      direccion: '',
+      telefono: '',
+      horaApertura: '',
+      horaCierre: '',
+      cerradoTemporalmente: false,
+    },
   })
   const { errors, isSubmitting } = formulario.formState
 
@@ -49,6 +58,9 @@ export function FormularioEstablecimiento() {
       descripcion: existente.descripcion ?? '',
       direccion: existente.direccion,
       telefono: existente.telefono ?? '',
+      horaApertura: existente.horaApertura ?? '',
+      horaCierre: existente.horaCierre ?? '',
+      cerradoTemporalmente: existente.cerradoTemporalmente ?? false,
     })
     if (existente.latitud != null && existente.longitud != null) {
       setUbicacion({ lat: existente.latitud, lng: existente.longitud })
@@ -165,6 +177,32 @@ export function FormularioEstablecimiento() {
               </label>
             </div>
             {vistaPrevia && <img className="preview-image" src={vistaPrevia} alt="Vista previa de la imagen" />}
+          </section>
+
+          <section className="form-card">
+            <h2>Horario de atención</h2>
+            <p className="form-hint">Los estudiantes verán si estás abierto en este momento (hora de Colombia).</p>
+            <div className="form-grid">
+              <label className={claseCampo('horaApertura')}>
+                Abre a las
+                <input type="time" {...formulario.register('horaApertura')} />
+                {errors.horaApertura && <small>{errors.horaApertura.message}</small>}
+              </label>
+              <label className={claseCampo('horaCierre')}>
+                Cierra a las
+                <input type="time" {...formulario.register('horaCierre')} />
+                {errors.horaCierre && <small>{errors.horaCierre.message}</small>}
+              </label>
+            </div>
+            <p className="form-hint">Si cierras después de medianoche, pon la hora del día siguiente (por ejemplo, de 18:00 a 02:00).</p>
+            <label className="switch-row">
+              <span>
+                <b>Cerrado temporalmente</b>
+                <small>Por vacaciones, arreglos o cualquier otro motivo.</small>
+              </span>
+              <input type="checkbox" {...formulario.register('cerradoTemporalmente')} />
+              <i aria-hidden="true" />
+            </label>
           </section>
 
           <section className="form-card">

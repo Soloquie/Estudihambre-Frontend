@@ -1,6 +1,7 @@
-import { ChevronRight, Clock3, MapPin, Store } from 'lucide-react'
+import { ChevronRight, Clock3, GraduationCap, MapPin, Store } from 'lucide-react'
 import { Estrellas } from '@/components/ui'
 import type { Establecimiento } from '../types'
+import { EstadoHorario } from './EstadoHorario'
 
 export type EstablecimientoConDatos = Establecimiento & {
   precioMinimo: number | null
@@ -8,6 +9,8 @@ export type EstablecimientoConDatos = Establecimiento & {
   distancia: { metros: number; minutos: number } | null
   promedio: number | null
   totalCalificaciones: number
+  /** Cantidad de beneficios estudiantiles vigentes (0 si no tiene o aún no cargan). */
+  beneficios: number
 }
 
 type Props = {
@@ -25,6 +28,11 @@ export function TarjetaEstablecimiento({ lugar, seleccionado = false, onAbrir, o
       onMouseLeave={() => onResaltar?.()}
     >
       <div className="place-image">
+        {lugar.beneficios > 0 && (
+          <span className="benefit-flag">
+            <GraduationCap size={14} /> {lugar.beneficios === 1 ? 'Beneficio' : `${lugar.beneficios} beneficios`}
+          </span>
+        )}
         {lugar.imagenUrl ? (
           <img src={lugar.imagenUrl} alt={`Imagen de ${lugar.nombre}`} loading="lazy" />
         ) : (
@@ -54,6 +62,7 @@ export function TarjetaEstablecimiento({ lugar, seleccionado = false, onAbrir, o
             </span>
           )}
         </div>
+        <EstadoHorario lugar={lugar} compacto />
         <p className="updated">
           <MapPin size={13} /> {lugar.direccion}
         </p>

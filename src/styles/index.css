@@ -514,3 +514,49 @@ a.info-line { color: inherit; text-decoration: none; }
 .moderation-select { padding: 16px 18px 0; margin: 0 0 12px; max-width: 420px; }
 .comment-cell { max-width: 420px; white-space: normal; }
 .table-card td .btn { min-height: 36px; padding: 6px 10px; font-size: 13px; }
+
+/* ---------- Horario de atención ---------- */
+.status.closed { background: #eef0ef; color: #4f5954; }
+.hours-state { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hours-text { color: var(--text-2); font-weight: 600; font-size: 14px; }
+.place-body .hours-state { margin-top: 8px; }
+.quick-facts { flex-wrap: wrap; row-gap: 10px; }
+.info-line.muted { color: var(--text-2); }
+.form-hint { color: var(--text-2); font-size: 14px; margin: 8px 0 4px; }
+.field-note { color: var(--dark-green); font-size: 13px; font-weight: 600; }
+.form-card .switch-row { border-top: 1px solid var(--line); margin-top: 14px; cursor: pointer; }
+.owner-badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- Sección estudiantil ---------- */
+.student-hero { background: linear-gradient(120deg, #fff6e0, #f8fbf9); border-color: #f1e2b8; }
+.benefit-flag { position: absolute; z-index: 1; right: 10px; top: 10px; display: inline-flex; align-items: center; gap: 5px; background: #fff6e0; color: #7e5700; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 700; box-shadow: var(--shadow); }
+.benefit-pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #f1e2b8; background: #fff6e0; color: #7e5700; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 14px; }
+.benefit-list { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+.benefit-list.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.benefit-card { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 12px; padding: 16px; }
+.benefit-card.ticket { border-left-color: #d9a21b; }
+.benefit-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--soft-green); color: var(--dark-green); }
+.benefit-card.ticket .benefit-icon { background: #fff6e0; color: #7e5700; }
+.benefit-body { min-width: 0; }
+.benefit-body h3 { margin: 4px 0 2px; font-size: 17px; }
+.benefit-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.benefit-type { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); }
+.benefit-value { display: block; font-size: 20px; color: var(--dark-green); margin: 2px 0 6px; }
+.benefit-card.ticket .benefit-value { color: #7e5700; }
+.benefit-detail { color: #38443e; margin: 0 0 6px; font-size: 14px; }
+.benefit-detail b { color: var(--dark-green); }
+.benefit-meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--text-2); font-size: 13px; }
+.benefit-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.benefit-meta code { background: var(--surface); border: 1px dashed #aebbb4; border-radius: 6px; padding: 1px 6px; color: #1a1a1a; font-weight: 700; }
+.benefit-place { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.benefit-place a { font-weight: 700; color: #1a1a1a; text-decoration: none; }
+.benefit-place a:hover { color: var(--dark-green); text-decoration: underline; }
+.benefit-place > span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: 13px; }
+.benefit-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.notice { background: #fff6e0; border: 1px solid #f1e2b8; color: #5e4300; border-radius: 10px; padding: 12px 14px; margin: 12px 0; }
+@media (max-width: 760px) {
+  .benefit-list.grid { grid-template-columns: 1fr; }
+  .benefit-card { grid-template-columns: 1fr; }
+  .benefit-icon { width: 38px; height: 38px; }
+  .benefit-actions .btn { flex: 1 1 auto; }
+}

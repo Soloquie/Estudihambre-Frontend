@@ -11,6 +11,12 @@ export type Establecimiento = {
   imagenUrl: string | null
   latitud: number | null
   longitud: number | null
+  /** "HH:mm" o null si el propietario no definió horario. */
+  horaApertura: string | null
+  horaCierre: string | null
+  cerradoTemporalmente: boolean | null
+  /** Lo calcula el backend con la hora de Bogotá; null si no hay horario. */
+  abiertoAhora: boolean | null
   estado: Estado
 }
 
@@ -23,4 +29,7 @@ export type DatosEstablecimiento = {
   telefono: string | null
   latitud: number | null
   longitud: number | null
+  horaApertura: string | null
+  horaCierre: string | null
+  cerradoTemporalmente: boolean
 }

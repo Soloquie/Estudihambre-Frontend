@@ -1,4 +1,4 @@
-import { Bell, CircleUserRound, Home, LogIn, Search, Store } from 'lucide-react'
+import { Bell, CircleUserRound, GraduationCap, Home, LogIn, Search, Store } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Logo } from '@/components/ui'
@@ -62,6 +62,9 @@ export function Principal() {
           <NavLink to="/" end className={claseEnlace}>
             Inicio
           </NavLink>
+          <NavLink to="/estudiantil" className={claseEnlace}>
+            Estudiantes
+          </NavLink>
           {usuario && (
             <NavLink to={rutaGestion} className={claseEnlace}>
               {textoGestion}
@@ -98,10 +101,18 @@ export function Principal() {
       <Outlet />
 
       {!enDetalle && (
-        <nav className={`bottom-nav ${usuario ? 'three' : ''}`} aria-label="Navegación inferior" style={usuario ? undefined : { gridTemplateColumns: 'repeat(2, 1fr)' }}>
+        <nav
+          className="bottom-nav"
+          aria-label="Navegación inferior"
+          style={{ gridTemplateColumns: `repeat(${usuario ? 4 : 3}, 1fr)` }}
+        >
           <NavLink to="/" end className={claseEnlace}>
             <Home size={22} />
             <span>Inicio</span>
+          </NavLink>
+          <NavLink to="/estudiantil" className={claseEnlace}>
+            <GraduationCap size={22} />
+            <span>Estudiantes</span>
           </NavLink>
           {usuario && (
             <NavLink to={rutaGestion} className={claseEnlace}>

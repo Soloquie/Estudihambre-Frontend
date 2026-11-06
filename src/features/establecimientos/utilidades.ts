@@ -17,6 +17,7 @@ export function enriquecer(
   establecimientos: Establecimiento[],
   precios: Map<number, number>,
   resumenes: Map<number, ResumenCalificaciones>,
+  beneficios: Map<number, unknown[]> = new Map(),
 ): EstablecimientoConDatos[] {
   return establecimientos.map((establecimiento) => {
     const precioMinimo = precios.get(establecimiento.id) ?? null
@@ -28,6 +29,7 @@ export function enriquecer(
       distancia: distanciaDesdeUniversidad(establecimiento.latitud, establecimiento.longitud),
       promedio: resumen && resumen.totalCalificaciones > 0 ? resumen.promedio : null,
       totalCalificaciones: resumen?.totalCalificaciones ?? 0,
+      beneficios: beneficios.get(establecimiento.id)?.length ?? 0,
     }
   })
 }
@@ -59,4 +61,15 @@ export function ordenar(lugares: EstablecimientoConDatos[], orden: Orden): Estab
     }
   }
   return [...lugares].sort((a, b) => valor(a) - valor(b))
+}
+
+/** Filtros que se aplican en el navegador porque el backend no los ofrece en /api/establecimientos. */
+export type FiltroLocal = { soloAbiertos: boolean; conBeneficio: boolean }
+
+export function filtrarLocal(lugares: EstablecimientoConDatos[], filtro: FiltroLocal): EstablecimientoConDatos[] {
+  return lugares.filter(
+    (lugar) =>
+      (!filtro.soloAbiertos || (lugar.abiertoAhora === true && !lugar.cerradoTemporalmente)) &&
+      (!filtro.conBeneficio || lugar.beneficios > 0),
+  )
 }

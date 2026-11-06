@@ -1,8 +1,9 @@
-import { ListFilter, MapPin, Menu as IconoLista, Search, X } from 'lucide-react'
+import { ChevronRight, Clock3, GraduationCap, ListFilter, MapPin, Menu as IconoLista, Search, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Chip, EstadoError, EstadoVacio, ListaCargando, Button } from '@/components/ui'
 import { MapaInicio, type LugarMapa } from '@/components/map/MapaInicio'
+import { useBeneficiosDe } from '@/features/beneficios/hooks'
 import { useResumenes } from '@/features/calificaciones/hooks'
 import { preciosMinimos, useMenus } from '@/features/menus/hooks'
 import { mensajeDeError } from '@/lib/http/client'
@@ -11,7 +12,7 @@ import type { FiltroEstablecimientos } from '../api'
 import { PanelFiltros } from '../components/PanelFiltros'
 import { TarjetaEstablecimiento } from '../components/TarjetaEstablecimiento'
 import { useEstablecimientos } from '../hooks'
-import { enriquecer, OPCIONES_ORDEN, ordenar, type Orden } from '../utilidades'
+import { enriquecer, filtrarLocal, OPCIONES_ORDEN, ordenar, type FiltroLocal, type Orden } from '../utilidades'
 
 /** Los filtros viven en la URL para poder compartir o recargar una búsqueda. */
 function leerFiltro(parametros: URLSearchParams): FiltroEstablecimientos {
@@ -28,8 +29,14 @@ function leerFiltro(parametros: URLSearchParams): FiltroEstablecimientos {
   }
 }
 
-function escribirFiltro(filtro: FiltroEstablecimientos): Record<string, string> {
+function leerFiltroLocal(parametros: URLSearchParams): FiltroLocal {
+  return { soloAbiertos: parametros.get('abierto') === '1', conBeneficio: parametros.get('beneficio') === '1' }
+}
+
+function escribirFiltro(filtro: FiltroEstablecimientos, local: FiltroLocal): Record<string, string> {
   const parametros: Record<string, string> = {}
+  if (local.soloAbiertos) parametros.abierto = '1'
+  if (local.conBeneficio) parametros.beneficio = '1'
   if (filtro.nombre) parametros.nombre = filtro.nombre
   if (filtro.tipo) parametros.tipo = filtro.tipo
   if (filtro.plato) parametros.plato = filtro.plato
@@ -42,6 +49,7 @@ export function Inicio() {
   const navegar = useNavigate()
   const [parametros, setParametros] = useSearchParams()
   const filtro = useMemo(() => leerFiltro(parametros), [parametros])
+  const local = useMemo(() => leerFiltroLocal(parametros), [parametros])
   const { nombre, tipo } = filtro
   const [texto, setTexto] = useState(nombre ?? '')
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
@@ -56,10 +64,17 @@ export function Inicio() {
   const menus = useMenus()
   const ids = useMemo(() => (todos.data ?? []).map((lugar) => lugar.id), [todos.data])
   const resumenes = useResumenes(ids)
+  const { porEstablecimiento: beneficios } = useBeneficiosDe(ids)
+
+  const totalBeneficios = [...beneficios.values()].reduce((suma, lista) => suma + lista.length, 0)
 
   const lugares = useMemo(
-    () => ordenar(enriquecer(establecimientos.data ?? [], preciosMinimos(menus.data), resumenes), orden),
-    [establecimientos.data, menus.data, resumenes, orden],
+    () =>
+      ordenar(
+        filtrarLocal(enriquecer(establecimientos.data ?? [], preciosMinimos(menus.data), resumenes, beneficios), local),
+        orden,
+      ),
+    [establecimientos.data, menus.data, resumenes, beneficios, local, orden],
   )
   // Los tipos salen de la lista completa para que los chips no desaparezcan al filtrar.
   const tipos = useMemo(() => [...new Set((todos.data ?? []).map((lugar) => lugar.tipo))].sort(), [todos.data])
@@ -78,8 +93,8 @@ export function Inicio() {
     }))
 
   const aplicar = useCallback(
-    (nuevo: FiltroEstablecimientos) => setParametros(escribirFiltro(nuevo)),
-    [setParametros],
+    (nuevo: FiltroEstablecimientos, nuevoLocal: FiltroLocal = local) => setParametros(escribirFiltro(nuevo, nuevoLocal)),
+    [setParametros, local],
   )
   const buscar = (evento: FormEvent) => {
     evento.preventDefault()
@@ -92,7 +107,7 @@ export function Inicio() {
   const abrir = (id: number) => navegar(`/establecimientos/${id}`)
   const cerrarFiltros = useCallback(() => setFiltrosAbiertos(false), [])
   const filtrosActivos = [filtro.tipo, filtro.plato, filtro.precioMax, filtro.minutosMax].filter(Boolean).length
-  const hayFiltro = Boolean(nombre) || filtrosActivos > 0
+  const hayFiltro = Boolean(nombre) || filtrosActivos > 0 || local.soloAbiertos || local.conBeneficio
   const cargando = establecimientos.isLoading || menus.isLoading
 
   return (
@@ -134,8 +149,35 @@ export function Inicio() {
         </form>
       </section>
 
+      {totalBeneficios > 0 && (
+        <Link className="student-banner" to="/estudiantil" style={{ marginTop: 16, textDecoration: 'none' }}>
+          <span className="banner-icon">
+            <GraduationCap size={22} />
+          </span>
+          <span>
+            <b>
+              {totalBeneficios === 1 ? '1 beneficio para estudiantes' : `${totalBeneficios} beneficios para estudiantes`}
+            </b>
+            <small>Descuentos con carné y tiqueteras cerca de la U.</small>
+          </span>
+          <ChevronRight size={20} aria-hidden="true" />
+        </Link>
+      )}
+
       <div className="home-controls">
         <div className="chips-row">
+          <Chip
+            active={local.soloAbiertos}
+            onClick={() => aplicar(filtro, { ...local, soloAbiertos: !local.soloAbiertos })}
+          >
+            <Clock3 size={15} /> Abierto ahora
+          </Chip>
+          <Chip
+            active={local.conBeneficio}
+            onClick={() => aplicar(filtro, { ...local, conBeneficio: !local.conBeneficio })}
+          >
+            <GraduationCap size={15} /> Con beneficio
+          </Chip>
           {OPCIONES_ORDEN.map((opcion) => (
             <Chip key={opcion.valor} active={orden === opcion.valor} onClick={() => setOrden(opcion.valor)}>
               {opcion.texto}

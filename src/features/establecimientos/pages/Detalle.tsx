@@ -1,9 +1,12 @@
-import { ArrowLeft, MapPin, MessageCircle, Phone, Star, Store } from 'lucide-react'
+import { ArrowLeft, Clock3, GraduationCap, MapPin, MessageCircle, Phone, Star, Store } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { MapaDetalle } from '@/components/map/MapaDetalle'
 import { Button, EstadoError, EstadoVacio, Estrellas } from '@/components/ui'
 import { UNIVERSIDAD } from '@/config/constants'
+import { TarjetaBeneficio } from '@/features/beneficios/components/TarjetaBeneficio'
+import { useBeneficios } from '@/features/beneficios/hooks'
+import { compararBeneficios } from '@/features/beneficios/utilidades'
 import { useResumenCalificaciones } from '@/features/calificaciones/hooks'
 import { SeccionResenas } from '@/features/comentarios/components/SeccionResenas'
 import { useMenusDeEstablecimiento } from '@/features/menus/hooks'
@@ -11,9 +14,11 @@ import type { Menu } from '@/features/menus/types'
 import { enlaceWhatsApp, monedaCOP } from '@/lib/format'
 import { distanciaDesdeUniversidad } from '@/lib/geo'
 import { ApiError, mensajeDeError } from '@/lib/http/client'
+import { EstadoHorario } from '../components/EstadoHorario'
+import { textoHorario } from '../horario'
 import { useEstablecimiento } from '../hooks'
 
-type Pestana = 'Menú' | 'Información' | 'Reseñas'
+type Pestana = 'Menú' | 'Beneficios' | 'Información' | 'Reseñas'
 
 function TarjetaMenu({ menu, destacado }: { menu: Menu; destacado: boolean }) {
   return (
@@ -45,6 +50,7 @@ export function Detalle() {
   const consulta = useEstablecimiento(id)
   const menus = useMenusDeEstablecimiento(id)
   const resumen = useResumenCalificaciones(id)
+  const beneficios = useBeneficios(id)
 
   if (consulta.isLoading) return <p className="state-box">Cargando establecimiento…</p>
 
@@ -67,6 +73,9 @@ export function Detalle() {
     (a, b) => Number(b.disponible) - Number(a.disponible) || a.precio - b.precio,
   )
   const masEconomico = ordenados.find((menu) => menu.disponible)
+  const listaBeneficios = [...(beneficios.data ?? [])].sort(compararBeneficios)
+  const pestanas: Pestana[] = listaBeneficios.length > 0 ? ['Menú', 'Beneficios', 'Información', 'Reseñas'] : ['Menú', 'Información', 'Reseñas']
+  const horario = textoHorario(lugar)
   const urlRuta =
     distancia &&
     `https://www.google.com/maps/dir/?api=1&origin=${UNIVERSIDAD.lat},${UNIVERSIDAD.lng}&destination=${lugar.latitud},${lugar.longitud}&travelmode=walking`
@@ -102,6 +111,7 @@ export function Detalle() {
         {lugar.descripcion && <p>{lugar.descripcion}</p>}
 
         <div className="quick-facts">
+          <EstadoHorario lugar={lugar} />
           {distancia && (
             <span>
               <MapPin />
@@ -109,10 +119,16 @@ export function Detalle() {
             </span>
           )}
           {masEconomico && <span>Desde {monedaCOP(masEconomico.precio)}</span>}
+          {listaBeneficios.length > 0 && (
+            <button type="button" className="benefit-pill" onClick={() => setPestana('Beneficios')}>
+              <GraduationCap size={16} />
+              {listaBeneficios.length === 1 ? '1 beneficio estudiantil' : `${listaBeneficios.length} beneficios estudiantiles`}
+            </button>
+          )}
         </div>
 
         <div className="tabs" role="tablist">
-          {(['Menú', 'Información', 'Reseñas'] as Pestana[]).map((opcion) => (
+          {pestanas.map((opcion) => (
             <button
               key={opcion}
               type="button"
@@ -141,10 +157,35 @@ export function Detalle() {
           </div>
         )}
 
+        {pestana === 'Beneficios' && (
+          <div className="tab-content" role="tabpanel">
+            <p className="form-hint">Presenta tu carné estudiantil vigente para acceder a estos beneficios.</p>
+            <div className="benefit-list">
+              {listaBeneficios.map((beneficio) => (
+                <TarjetaBeneficio key={beneficio.id} beneficio={beneficio} precioMinimo={masEconomico?.precio} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {pestana === 'Reseñas' && <SeccionResenas establecimientoId={lugar.id} />}
 
         {pestana === 'Información' && (
           <div className="tab-content" role="tabpanel">
+            <h2>Horario</h2>
+            {lugar.cerradoTemporalmente ? (
+              <p className="info-line">
+                <Clock3 /> Cerrado temporalmente{horario ? ` (horario habitual: ${horario})` : ''}
+              </p>
+            ) : horario ? (
+              <p className="info-line">
+                <Clock3 /> Todos los días, {horario}
+              </p>
+            ) : (
+              <p className="info-line muted">
+                <Clock3 /> Este lugar aún no publica su horario
+              </p>
+            )}
             <h2>Cómo llegar</h2>
             <p className="info-line">
               <MapPin /> {lugar.direccion}

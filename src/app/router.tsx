@@ -18,6 +18,10 @@ const FormularioEstablecimiento = lazy(() =>
   })),
 )
 const GestionMenus = lazy(() => import('@/features/menus/pages/GestionMenus').then((m) => ({ default: m.GestionMenus })))
+const GestionBeneficios = lazy(() =>
+  import('@/features/beneficios/pages/GestionBeneficios').then((m) => ({ default: m.GestionBeneficios })),
+)
+const Estudiantil = lazy(() => import('@/features/beneficios/pages/Estudiantil').then((m) => ({ default: m.Estudiantil })))
 const AdminEstablecimientos = lazy(() =>
   import('@/features/admin/pages/AdminEstablecimientos').then((m) => ({ default: m.AdminEstablecimientos })),
 )
@@ -25,6 +29,8 @@ const AdminEstablecimientos = lazy(() =>
 const TITULOS: [RegExp, string][] = [
   [/^\/$/, 'Inicio'],
   [/^\/establecimientos\//, 'Establecimiento'],
+  [/^\/estudiantil/, 'Beneficios estudiantiles'],
+  [/^\/mis-establecimientos\/\d+\/beneficios/, 'Beneficios estudiantiles'],
   [/^\/ingresar/, 'Iniciar sesión'],
   [/^\/registro/, 'Crear cuenta'],
   [/^\/perfil/, 'Perfil'],
@@ -66,6 +72,14 @@ export const router = createBrowserRouter([
           { index: true, element: <Inicio /> },
           { path: 'establecimientos/:id', element: <Detalle /> },
           {
+            path: 'estudiantil',
+            element: (
+              <Diferido>
+                <Estudiantil />
+              </Diferido>
+            ),
+          },
+          {
             path: 'perfil',
             element: (
               <RequireAuth>
@@ -79,6 +93,7 @@ export const router = createBrowserRouter([
           { path: 'mis-establecimientos/nuevo', element: propietario(<FormularioEstablecimiento />) },
           { path: 'mis-establecimientos/:id/editar', element: propietario(<FormularioEstablecimiento />) },
           { path: 'mis-establecimientos/:id/menus', element: propietario(<GestionMenus />) },
+          { path: 'mis-establecimientos/:id/beneficios', element: propietario(<GestionBeneficios />) },
           { path: '*', element: NoEncontrada },
         ],
       },
