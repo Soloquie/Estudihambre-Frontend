@@ -1,0 +1,28 @@
+{
+    # Railway termina HTTPS en su proxy frontal.
+    auto_https off
+    admin off
+}
+
+:{$PORT:3000} {
+    encode gzip
+
+    handle /health {
+        respond "ok" 200
+    }
+
+    # La API conserva su prefijo /api y sus cookies de sesión + CSRF.
+    # BACKEND_URL es un dominio HTTPS público de Spring Boot, sin /api al final.
+    handle /api/* {
+        reverse_proxy {$BACKEND_URL} {
+            header_up Host {upstream_hostport}
+        }
+    }
+
+    # React Router: recargas de /ingresar, /estudiantil, etc.
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}
